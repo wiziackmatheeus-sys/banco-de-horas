@@ -3,15 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Ponto</title>
+    <title>Controle de Ponto - Grupo Vilela de Queiroz</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Cores personalizadas baseadas na identidade visual da GVQ */
+        :root {
+            --gvq-blue: #070928;
+            --gvq-green: #00873e;
+            --gvq-green-light: #00a84f;
+        }
+        .bg-gvq-dark { background-color: #0b0f29; }
+        .bg-gvq-card { background-color: #13183f; }
+        .border-gvq { border-color: #212b63; }
+    </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+<body class="bg-gvq-dark text-slate-100 min-h-screen flex flex-col justify-between">
 
-    <!-- Cabeçalho -->
-    <header class="p-4 text-center bg-slate-800 shadow-md">
-        <h1 class="text-xl font-bold">Controle de Ponto</h1>
-        <p id="current-date" class="text-sm text-slate-400"></p>
+    <!-- Cabeçalho com Logo -->
+    <header class="p-4 text-center bg-gvq-card shadow-md border-b border-gvq flex flex-col items-center justify-center space-y-2">
+        <img src="logo.png" alt="Grupo Vilela de Queiroz" class="h-10 object-contain">
+        <div>
+            <h1 class="text-lg font-bold tracking-wide">Controle de Ponto</h1>
+            <p id="current-date" class="text-xs text-slate-400"></p>
+        </div>
     </header>
 
     <!-- Conteúdo Principal -->
@@ -19,33 +33,33 @@
 
         <!-- Relógio em tempo real -->
         <div class="text-center">
-            <span id="live-clock" class="text-4xl font-mono font-semibold tracking-wider">00:00:00</span>
+            <span id="live-clock" class="text-4xl font-mono font-semibold tracking-wider text-emerald-400">00:00:00</span>
         </div>
 
         <!-- Botão Principal de Bater Ponto -->
         <div class="w-full flex flex-col items-center">
-            <button onclick="abrirModalBaterPonto()" class="w-48 h-48 rounded-full bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition shadow-lg shadow-emerald-900/50 flex flex-col items-center justify-center border-4 border-emerald-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <button onclick="abrirModalBaterPonto()" class="w-48 h-48 rounded-full bg-[#00873e] hover:bg-[#00a84f] active:scale-95 transition shadow-lg shadow-emerald-950/50 flex flex-col items-center justify-center border-4 border-emerald-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mb-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span class="text-lg font-bold">BATER PONTO</span>
+                <span class="text-lg font-bold text-white">BATER PONTO</span>
             </button>
-            <p id="proximo-tipo" class="mt-3 text-sm text-slate-400 text-center"></p>
+            <p id="proximo-tipo" class="mt-3 text-sm text-slate-300 text-center font-medium"></p>
         </div>
 
         <!-- Resumo do Banco de Horas -->
-        <div class="w-full bg-slate-800 p-4 rounded-xl shadow border border-slate-700 flex justify-between items-center">
+        <div class="w-full bg-gvq-card p-4 rounded-xl shadow border border-gvq flex justify-between items-center">
             <div>
                 <p class="text-xs text-slate-400 uppercase font-semibold">Saldo Atual</p>
                 <p id="saldo-banco" class="text-xl font-bold font-mono">00:00</p>
             </div>
-            <button onclick="abrirModalManual()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded-lg text-sm transition">
+            <button onclick="abrirModalManual()" class="bg-[#1f2863] hover:bg-[#28337a] text-white px-3 py-2 rounded-lg text-sm transition font-medium">
                 + Adicionar Manual
             </button>
         </div>
 
         <!-- Histórico Recente -->
-        <div class="w-full bg-slate-800 p-4 rounded-xl shadow border border-slate-700">
+        <div class="w-full bg-gvq-card p-4 rounded-xl shadow border border-gvq">
             <h2 class="text-sm font-semibold text-slate-400 mb-3 uppercase">Últimos Registros</h2>
             <div id="lista-registros" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-sm">
                 <!-- Preenchido via JS -->
@@ -56,15 +70,15 @@
 
     <!-- Modal de Confirmação / Registro -->
     <div id="modal-ponto" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 p-6 rounded-2xl w-full max-w-sm border border-slate-700 shadow-xl space-y-4">
+        <div class="bg-gvq-card p-6 rounded-2xl w-full max-w-sm border border-gvq shadow-xl space-y-4">
             <h3 id="modal-titulo" class="text-lg font-bold">Confirmar Ponto</h3>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Horário</label>
-                <input type="time" id="input-horario" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-center font-mono text-xl text-white">
+                <input type="time" id="input-horario" class="w-full bg-gvq-dark border border-gvq rounded-lg p-3 text-center font-mono text-xl text-white">
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Tipo de Batida</label>
-                <select id="select-tipo" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white">
+                <select id="select-tipo" class="w-full bg-gvq-dark border border-gvq rounded-lg p-3 text-white">
                     <option value="Entrada">Entrada (Manhã)</option>
                     <option value="Saída Almoço">Saída Almoço</option>
                     <option value="Retorno Almoço">Retorno Almoço</option>
@@ -73,25 +87,25 @@
             </div>
             <div>
                 <label class="block text-xs text-slate-400 mb-1">Data</label>
-                <input type="date" id="input-data" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white">
+                <input type="date" id="input-data" class="w-full bg-gvq-dark border border-gvq rounded-lg p-3 text-white">
             </div>
             <div class="flex space-x-3 pt-2">
                 <button onclick="fecharModais()" class="flex-1 bg-slate-700 hover:bg-slate-600 p-3 rounded-lg font-medium transition">Cancelar</button>
-                <button onclick="salvarPonto()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 p-3 rounded-lg font-medium transition">Salvar</button>
+                <button onclick="salvarPonto()" class="flex-1 bg-[#00873e] hover:bg-[#00a84f] text-white p-3 rounded-lg font-medium transition">Salvar</button>
             </div>
         </div>
     </div>
 
     <!-- Rodapé -->
-    <footer class="p-4 text-center text-xs text-slate-500">
-        Ponto Web &copy; 2026
+    <footer class="p-4 text-center text-xs text-slate-500 border-t border-gvq/50">
+        Grupo Vilela de Queiroz &copy; 2026
     </footer>
 
     <script>
         // Jornada padrão diária líquida em minutos (8 horas = 480 min)
         const JORNADA_DIARIA = 480;
 
-        let registros = JSON.parse(localStorage.getItem('registros_ponto')) || [];
+        let registros = JSON.parse(localStorage.getItem('registros_ponto_gvq')) || [];
 
         // Relógio ao vivo e data atual
         setInterval(() => {
@@ -156,7 +170,7 @@
             }
 
             registros.push({ id: Date.now(), data, horario, tipo });
-            localStorage.setItem('registros_ponto', JSON.stringify(registros));
+            localStorage.setItem('registros_ponto_gvq', JSON.stringify(registros));
 
             fecharModais();
             atualizarTela();
@@ -165,7 +179,7 @@
         function excluirRegistro(id) {
             if (confirm('Deseja realmente excluir este registro?')) {
                 registros = registros.filter(r => r.id !== id);
-                localStorage.setItem('registros_ponto', JSON.stringify(registros));
+                localStorage.setItem('registros_ponto_gvq', JSON.stringify(registros));
                 atualizarTela();
             }
         }
@@ -195,7 +209,7 @@
             for (const data in dias) {
                 const [ano, mes, dia] = data.split('-').map(Number);
                 const dataObj = new Date(ano, mes - 1, dia);
-                const diaSemana = dataObj.getDay(); // 0 = Domingo, 6 = Sábado
+                const diaSemana = dataObj.getDay(); 
 
                 if (diaSemana === 0 || diaSemana === 6) continue; // Ignorar finais de semana
 
@@ -248,7 +262,7 @@
                 const dataFormatada = `${dia}/${mes}/${ano}`;
                 
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-slate-900/50 p-2 rounded-lg border border-slate-700/50";
+                div.className = "flex justify-between items-center bg-gvq-dark p-2 rounded-lg border border-gvq/50";
                 div.innerHTML = `
                     <div>
                         <span class="font-mono font-bold text-emerald-400">${r.horario}</span>
