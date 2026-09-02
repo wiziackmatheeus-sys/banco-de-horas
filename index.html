@@ -103,9 +103,8 @@
     <!-- SDKs do Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBm6j9bzrYjqaHEeUufUx_OoCvrRhGX-cw",
             authDomain: "banco-de-horas-11521.firebaseapp.com",
@@ -122,7 +121,6 @@
         const JORNADA_DIARIA = 480; // 8 horas líquidas em minutos
         let registros = [];
 
-        // Relógio ao vivo e data atual
         setInterval(() => {
             const agora = new Date();
             document.getElementById('live-clock').innerText = agora.toLocaleTimeString('pt-BR');
@@ -135,11 +133,10 @@
             return data.toISOString().split('T')[0];
         }
 
+        // Buscar dados do Firestore sem travar em índices
         async function carregarRegistros() {
             try {
-                const q = query(collection(db, "registros"), orderBy("data", "desc"), orderBy("horario", "desc"));
-                const querySnapshot = await getDocs(q);
-                
+                const querySnapshot = await getDocs(collection(db, "registros"));
                 registros = [];
                 querySnapshot.forEach((docSnap) => {
                     registros.push({
@@ -147,6 +144,9 @@
                         ...docSnap.data()
                     });
                 });
+                
+                // Ordenar por data e horário decrescente direto no app
+                registros.sort((a, b) => b.data.localeCompare(a.data) || b.horario.localeCompare(a.horario));
                 
                 atualizarTela();
             } catch (error) {
@@ -257,24 +257,22 @@
 
                 const batidas = dias[data].sort((a, b) => a.horario.localeCompare(b.horario));
                 
-                if (batidas.length >= 2) {
-                    let minutosTrab = 0;
-                    
-                    if (batidas.length >= 4) {
-                        const p1 = converterHoraMinutos(batidas[0].horario);
-                        const p2 = converterHoraMinutos(batidas[1].horario);
-                        const p3 = converterHoraMinutos(batidas[2].horario);
-                        const p4 = converterHoraMinutos(batidas[3].horario);
-                        minutosTrab = (p2 - p1) + (p4 - p3);
-                    } else if (batidas.length === 2) {
-                        const p1 = converterHoraMinutos(batidas[0].horario);
-                        const p2 = converterHoraMinutos(batidas[1].horario);
-                        minutosTrab = p2 - p1;
-                    }
+                let minutosTrab = 0;
 
-                    const saldoDia = minutosTrab - JORNADA_DIARIA;
-                    saldoTotalMinutos += saldoDia;
+                if (batidas.length >= 4) {
+                    const p1 = converterHoraMinutos(batidas[0].horario);
+                    const p2 = converterHoraMinutos(batidas[1].horario);
+                    const p3 = converterHoraMinutos(batidas[2].horario);
+                    const p4 = converterHoraMinutos(batidas[3].horario);
+                    minutosTrab = (p2 - p1) + (p4 - p3);
+                } else if (batidas.length === 2) {
+                    const p1 = converterHoraMinutos(batidas[0].horario);
+                    const p2 = converterHoraMinutos(batidas[1].horario);
+                    minutosTrab = p2 - p1;
                 }
+
+                const saldoDia = minutosTrab - JORNADA_DIARIA;
+                saldoTotalMinutos += saldoDia;
             }
 
             const elSaldo = document.getElementById('saldo-banco');
