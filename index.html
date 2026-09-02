@@ -6,7 +6,6 @@
     <title>Controle de Ponto - Grupo Vilela de Queiroz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Cores personalizadas baseadas na identidade visual da GVQ */
         :root {
             --gvq-blue: #070928;
             --gvq-green: #00873e;
@@ -44,7 +43,7 @@
                 </svg>
                 <span class="text-lg font-bold text-white">BATER PONTO</span>
             </button>
-            <p id="proximo-tipo" class="mt-3 text-sm text-slate-300 text-center font-medium"></p>
+            <p id="proximo-tipo" class="mt-3 text-sm text-slate-300 text-center font-medium">Carregando...</p>
         </div>
 
         <!-- Resumo do Banco de Horas -->
@@ -62,7 +61,7 @@
         <div class="w-full bg-gvq-card p-4 rounded-xl shadow border border-gvq">
             <h2 class="text-sm font-semibold text-slate-400 mb-3 uppercase">Últimos Registros</h2>
             <div id="lista-registros" class="space-y-2 max-h-48 overflow-y-auto pr-1 text-sm">
-                <!-- Preenchido via JS -->
+                <p class="text-slate-500 text-center py-2">Carregando registros...</p>
             </div>
         </div>
 
@@ -101,11 +100,27 @@
         Grupo Vilela de Queiroz &copy; 2026
     </footer>
 
-    <script>
-        // Jornada padrão diária líquida em minutos (8 horas = 480 min)
-        const JORNADA_DIARIA = 480;
+    <!-- SDKs do Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        let registros = JSON.parse(localStorage.getItem('registros_ponto_gvq')) || [];
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBm6j9bzrYjqaHEeUufUx_OoCvrRhGX-cw",
+            authDomain: "banco-de-horas-11521.firebaseapp.com",
+            projectId: "banco-de-horas-11521",
+            storageBucket: "banco-de-horas-11521.firebasestorage.app",
+            messagingSenderId: "608750621397",
+            appId: "1:608750621397:web:a433e48050569e7810085c",
+            measurementId: "G-QEN9JMNWLJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const JORNADA_DIARIA = 480; // 8 horas líquidas em minutos
+        let registros = [];
 
         // Relógio ao vivo e data atual
         setInterval(() => {
@@ -120,6 +135,26 @@
             return data.toISOString().split('T')[0];
         }
 
+        async function carregarRegistros() {
+            try {
+                const q = query(collection(db, "registros"), orderBy("data", "desc"), orderBy("horario", "desc"));
+                const querySnapshot = await getDocs(q);
+                
+                registros = [];
+                querySnapshot.forEach((docSnap) => {
+                    registros.push({
+                        idDoc: docSnap.id,
+                        ...docSnap.data()
+                    });
+                });
+                
+                atualizarTela();
+            } catch (error) {
+                console.error("Erro ao carregar do Firebase:", error);
+                document.getElementById('lista-registros').innerHTML = '<p class="text-rose-400 text-center py-2">Erro ao conectar com a nuvem.</p>';
+            }
+        }
+
         function atualizarProximoTipo() {
             const hoje = formatarDataISO(new Date());
             const registrosHoje = registros.filter(r => r.data === hoje).sort((a, b) => a.horario.localeCompare(b.horario));
@@ -129,7 +164,7 @@
             document.getElementById('proximo-tipo').innerText = registrosHoje.length < 4 ? `Próxima batida sugerida: ${proximo}` : 'Dia concluído!';
         }
 
-        function abrirModalBaterPonto() {
+        window.abrirModalBaterPonto = function() {
             const agora = new Date();
             const horaAtual = agora.toTimeString().slice(0, 5);
             
@@ -145,7 +180,7 @@
             document.getElementById('modal-ponto').classList.remove('hidden');
         }
 
-        function abrirModalManual() {
+        window.abrirModalManual = function() {
             const agora = new Date();
             document.getElementById('input-horario').value = agora.toTimeString().slice(0, 5);
             document.getElementById('input-data').value = formatarDataISO(agora);
@@ -155,11 +190,11 @@
             document.getElementById('modal-ponto').classList.remove('hidden');
         }
 
-        function fecharModais() {
+        window.fecharModais = function() {
             document.getElementById('modal-ponto').classList.add('hidden');
         }
 
-        function salvarPonto() {
+        window.salvarPonto = async function() {
             const horario = document.getElementById('input-horario').value;
             const tipo = document.getElementById('select-tipo').value;
             const data = document.getElementById('input-data').value;
@@ -169,18 +204,25 @@
                 return;
             }
 
-            registros.push({ id: Date.now(), data, horario, tipo });
-            localStorage.setItem('registros_ponto_gvq', JSON.stringify(registros));
-
-            fecharModais();
-            atualizarTela();
+            try {
+                await addDoc(collection(db, "registros"), { data, horario, tipo });
+                fecharModais();
+                carregarRegistros();
+            } catch (error) {
+                console.error("Erro ao salvar:", error);
+                alert('Erro ao salvar dados na nuvem.');
+            }
         }
 
-        function excluirRegistro(id) {
+        window.excluirRegistro = async function(idDoc) {
             if (confirm('Deseja realmente excluir este registro?')) {
-                registros = registros.filter(r => r.id !== id);
-                localStorage.setItem('registros_ponto_gvq', JSON.stringify(registros));
-                atualizarTela();
+                try {
+                    await deleteDoc(doc(db, "registros", idDoc));
+                    carregarRegistros();
+                } catch (error) {
+                    console.error("Erro ao excluir:", error);
+                    alert('Erro ao excluir registro.');
+                }
             }
         }
 
@@ -211,7 +253,7 @@
                 const dataObj = new Date(ano, mes - 1, dia);
                 const diaSemana = dataObj.getDay(); 
 
-                if (diaSemana === 0 || diaSemana === 6) continue; // Ignorar finais de semana
+                if (diaSemana === 0 || diaSemana === 6) continue; // Ignorar fins de semana
 
                 const batidas = dias[data].sort((a, b) => a.horario.localeCompare(b.horario));
                 
@@ -250,7 +292,7 @@
             const listaEl = document.getElementById('lista-registros');
             listaEl.innerHTML = '';
 
-            const ultimos = [...registros].sort((a, b) => b.data.localeCompare(a.data) || b.horario.localeCompare(a.horario)).slice(0, 10);
+            const ultimos = [...registros].slice(0, 10);
 
             if (ultimos.length === 0) {
                 listaEl.innerHTML = '<p class="text-slate-500 text-center py-2">Nenhum registro encontrado.</p>';
@@ -269,7 +311,7 @@
                         <span class="text-xs text-slate-400 ml-2">(${r.tipo})</span>
                         <div class="text-xs text-slate-500">${dataFormatada}</div>
                     </div>
-                    <button onclick="excluirRegistro(${r.id})" class="text-rose-400 hover:text-rose-300 p-1 text-xs">Excluir</button>
+                    <button onclick="excluirRegistro('${r.idDoc}')" class="text-rose-400 hover:text-rose-300 p-1 text-xs">Excluir</button>
                 `;
                 listaEl.appendChild(div);
             });
@@ -281,8 +323,7 @@
             atualizarProximoTipo();
         }
 
-        // Inicializar
-        atualizarTela();
+        carregarRegistros();
     </script>
 </body>
 </html>
